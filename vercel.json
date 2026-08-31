@@ -1,10 +1,6 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "public": false,
-  "env": {
-    "VITE_PUBLIC_URL": "@/public"
-  },
   "headers": [
     {
       "source": "/data/:path*",

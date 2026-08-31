@@ -1,0 +1,116 @@
+{
+  "model": "ICON-D2",
+  "provider": "DWD",
+  "run": "00",
+  "variable": "t_2m",
+  "resolution": "2.2 km",
+  "bounds": [
+    [
+      50.5,
+      2.5
+    ],
+    [
+      54.0,
+      8.5
+    ]
+  ],
+  "frames": [
+    {
+      "forecastHour": 0,
+      "image": "/data/icon-d2/000.png"
+    },
+    {
+      "forecastHour": 1,
+      "image": "/data/icon-d2/001.png"
+    },
+    {
+      "forecastHour": 2,
+      "image": "/data/icon-d2/002.png"
+    },
+    {
+      "forecastHour": 3,
+      "image": "/data/icon-d2/003.png"
+    },
+    {
+      "forecastHour": 4,
+      "image": "/data/icon-d2/004.png"
+    },
+    {
+      "forecastHour": 5,
+      "image": "/data/icon-d2/005.png"
+    },
+    {
+      "forecastHour": 6,
+      "image": "/data/icon-d2/006.png"
+    },
+    {
+      "forecastHour": 7,
+      "image": "/data/icon-d2/007.png"
+    },
+    {
+      "forecastHour": 8,
+      "image": "/data/icon-d2/008.png"
+    },
+    {
+      "forecastHour": 9,
+      "image": "/data/icon-d2/009.png"
+    },
+    {
+      "forecastHour": 10,
+      "image": "/data/icon-d2/010.png"
+    },
+    {
+      "forecastHour": 11,
+      "image": "/data/icon-d2/011.png"
+    },
+    {
+      "forecastHour": 12,
+      "image": "/data/icon-d2/012.png"
+    },
+    {
+      "forecastHour": 13,
+      "image": "/data/icon-d2/013.png"
+    },
+    {
+      "forecastHour": 14,
+      "image": "/data/icon-d2/014.png"
+    },
+    {
+      "forecastHour": 15,
+      "image": "/data/icon-d2/015.png"
+    },
+    {
+      "forecastHour": 16,
+      "image": "/data/icon-d2/016.png"
+    },
+    {
+      "forecastHour": 17,
+      "image": "/data/icon-d2/017.png"
+    },
+    {
+      "forecastHour": 18,
+      "image": "/data/icon-d2/018.png"
+    },
+    {
+      "forecastHour": 19,
+      "image": "/data/icon-d2/019.png"
+    },
+    {
+      "forecastHour": 20,
+      "image": "/data/icon-d2/020.png"
+    },
+    {
+      "forecastHour": 21,
+      "image": "/data/icon-d2/021.png"
+    },
+    {
+      "forecastHour": 22,
+      "image": "/data/icon-d2/022.png"
+    },
+    {
+      "forecastHour": 23,
+      "image": "/data/icon-d2/023.png"
+    }
+  ],
+  "generatedAt": "2026-08-31T18:28:08.224067+00:00"
+}

@@ -68,70 +68,62 @@ function App() {
    * Initialize map.
    */
   useEffect(() => {
+    // Only initialize after component has rendered
     if (!mapContainerRef.current || mapRef.current) {
       console.log("Early return - container:", !!mapContainerRef.current, "mapRef.current:", !!mapRef.current);
       return;
     }
 
-    // Small delay to ensure container has dimensions
-    const timer = setTimeout(() => {
-      const container = mapContainerRef.current;
-      
-      console.log("Map init attempt - container exists:", !!container);
-      
-      if (!container) {
-        console.error("Container is null!");
-        return;
-      }
-      
-      console.log("Map container dimensions:", {
-        width: container.offsetWidth,
-        height: container.offsetHeight,
-        display: window.getComputedStyle(container).display,
-        position: window.getComputedStyle(container).position,
+    console.log("Starting map initialization");
+
+    const container = mapContainerRef.current;
+    
+    console.log("Map container dimensions:", {
+      width: container.offsetWidth,
+      height: container.offsetHeight,
+      display: window.getComputedStyle(container).display,
+      position: window.getComputedStyle(container).position,
+    });
+
+    try {
+      const map = L.map(container, {
+        zoomControl: false,
+        attributionControl: true,
       });
 
-      try {
-        const map = L.map(container, {
-          zoomControl: false,
-          attributionControl: true,
-        });
+      console.log("Map created successfully");
 
-        console.log("Map created successfully");
+      L.control.zoom({
+        position: "bottomright",
+      }).addTo(map);
 
-        L.control.zoom({
-          position: "bottomright",
-        }).addTo(map);
+      L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          maxZoom: 18,
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        }
+      ).addTo(map);
 
-        L.tileLayer(
-          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          {
-            maxZoom: 18,
-            attribution:
-              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          }
-        ).addTo(map);
+      map.fitBounds([
+        [50.5, 3.0],
+        [54.0, 8.0],
+      ]);
 
-        map.fitBounds([
-          [50.5, 3.0],
-          [54.0, 8.0],
-        ]);
-
-        mapRef.current = map;
-        console.log("Map initialized and stored in ref");
-      } catch (error) {
-        console.error("Error initializing map:", error);
-      }
-    }, 100);
+      mapRef.current = map;
+      console.log("Map initialized and stored in ref");
+    } catch (error) {
+      console.error("Error initializing map:", error);
+    }
 
     return () => {
-      clearTimeout(timer);
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
     };
-  }, []);
+  }, [manifest]);
 
   /*
    * Update weather overlay.

@@ -3,7 +3,7 @@ import json
 import os
 import re
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -260,6 +260,18 @@ def main():
     # Limit first MVP to 24 frames.
     files = files[:24]
 
+    # Determine the model run time from the filename
+    # Format: icon-d2_germany_regular-lat-lon_single-level_YYYYMMDDHH_HHH_2d_t_2m.grib2.bz2
+    if files:
+        match = re.search(r"_(\d{10})_", files[0])
+        if match:
+            run_str = match.group(1)  # YYYYMMDDHH
+            run_datetime = datetime.strptime(run_str, "%Y%m%d%H").replace(tzinfo=timezone.utc)
+        else:
+            run_datetime = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    else:
+        run_datetime = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+
     frames = []
 
     for index, filename in enumerate(files):
@@ -335,9 +347,13 @@ def main():
         else:
             forecast_hour = index
 
+        # Calculate valid time: run time + forecast hours
+        valid_time = run_datetime + timedelta(hours=forecast_hour)
+
         frames.append(
             {
                 "forecastHour": forecast_hour,
+                "validTime": valid_time.isoformat(),
                 "image": f"/data/icon-d2/{index:03d}.png",
             }
         )

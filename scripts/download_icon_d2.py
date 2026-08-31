@@ -2,11 +2,12 @@ import bz2
 import json
 import os
 import re
-import subprocess
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+import cfgrib
+import numpy as np
 from PIL import Image
 
 
@@ -103,60 +104,60 @@ def temperature_to_rgba(value):
     return (0, 0, 0, 0)
 
 
-def read_grib_with_eccodes(path):
+def read_grib_with_cfgrib(path):
     """
-    Uses the ecCodes command line tools.
-
-    We convert the GRIB2 file into JSON using
-    grib_get_data.
+    Parse GRIB2 file using cfgrib library.
+    
+    Returns list of (lat, lon, value) tuples for points in our region.
     """
-
-    result = subprocess.run(
-        [
-            "grib_get_data",
-            "-p",
-            "lat,lon,value",
-            str(path),
-        ],
-        capture_output=True,
-        text=True,
-    )
-
-    if result.returncode != 0:
-        print(f"Error from grib_get_data (exit code {result.returncode}):")
-        print(f"stderr: {result.stderr}")
-        print(f"stdout: {result.stdout}")
-        raise RuntimeError(f"grib_get_data failed: {result.stderr}")
-
-    points = []
-
-    for line in result.stdout.splitlines():
-        line = line.strip()
-
-        if not line or line.startswith("Latitude"):
-            continue
-
-        parts = line.split()
-
-        if len(parts) < 3:
-            continue
-
-        try:
-            lat = float(parts[0])
-            lon = float(parts[1])
-            value = float(parts[2])
-        except ValueError:
-            continue
-
-        if (
-            MIN_LAT <= lat <= MAX_LAT
-            and MIN_LON <= lon <= MAX_LON
-        ):
-            points.append(
-                (lat, lon, value)
-            )
-
-    return points
+    
+    try:
+        # Open GRIB file with cfgrib
+        ds = cfgrib.open_file(str(path))
+        
+        # Get temperature data (t, t2m or similar - depends on GRIB structure)
+        # Common names: 't', 't2m', 'temperature', etc.
+        temp_var = None
+        for var_name in ds.data_vars:
+            if 't' in var_name.lower() and '2m' in var_name.lower():
+                temp_var = var_name
+                break
+        
+        if temp_var is None:
+            # Fallback: just take first variable
+            temp_var = list(ds.data_vars)[0]
+            print(f"Note: using variable '{temp_var}' (not t2m)")
+        
+        # Get lat/lon coordinates and temperature data
+        lats = ds.coords['latitude'].values
+        lons = ds.coords['longitude'].values
+        temps = ds[temp_var].values
+        
+        # Create meshgrid of coordinates
+        lon_grid, lat_grid = np.meshgrid(lons, lats)
+        
+        points = []
+        
+        # Iterate through all grid points
+        for i in range(len(lats)):
+            for j in range(len(lons)):
+                lat = lat_grid[i, j]
+                lon = lon_grid[i, j]
+                value = temps[i, j]
+                
+                # Filter to our region
+                if (MIN_LAT <= lat <= MAX_LAT and 
+                    MIN_LON <= lon <= MAX_LON):
+                    # Skip NaN values
+                    if not np.isnan(value):
+                        points.append((lat, lon, float(value)))
+        
+        print(f"Found {len(points)} points in region")
+        return points
+        
+    except Exception as e:
+        print(f"Error reading GRIB with cfgrib: {e}")
+        raise
 
 
 def create_overlay(points, output_file):
@@ -298,7 +299,7 @@ def main():
 
         print("Reading GRIB...")
 
-        points = read_grib_with_eccodes(
+        points = read_grib_with_cfgrib(
             local_grib
         )
 

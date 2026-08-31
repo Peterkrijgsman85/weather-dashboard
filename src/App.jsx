@@ -174,6 +174,12 @@ function App() {
     return manifest?.frames?.[timeIndex];
   }, [manifest, timeIndex]);
 
+  // Debug effect
+  useEffect(() => {
+    console.log("mapContainerRef.current:", mapContainerRef.current);
+    console.log("mapRef.current:", mapRef.current);
+  }, []);
+
   if (loading) {
     return (
       <div className="loading">
@@ -227,6 +233,8 @@ function App() {
           ref={mapContainerRef}
           className="map"
         />
+
+        {!mapRef.current && <div style={{position: 'absolute', top: 10, left: 10, color: 'red', zIndex: 9999, fontSize: '12px'}}>Map not initialized</div>}
 
         <div className="map-status">
 

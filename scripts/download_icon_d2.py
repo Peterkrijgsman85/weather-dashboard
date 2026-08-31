@@ -6,7 +6,6 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-import cfgrib
 import numpy as np
 from PIL import Image
 
@@ -112,21 +111,28 @@ def read_grib_with_cfgrib(path):
     """
     
     try:
-        # Open GRIB file with cfgrib
-        ds = cfgrib.open_file(str(path))
+        # Open GRIB file with cfgrib and xarray
+        import xarray as xr
+        ds = xr.open_dataset(str(path), engine='cfgrib')
         
-        # Get temperature data (t, t2m or similar - depends on GRIB structure)
-        # Common names: 't', 't2m', 'temperature', etc.
+        # Get temperature data - look for 2m temperature
         temp_var = None
         for var_name in ds.data_vars:
-            if 't' in var_name.lower() and '2m' in var_name.lower():
+            if 't2m' in var_name.lower() or ('t' in var_name.lower() and '2m' in var_name.lower()):
                 temp_var = var_name
                 break
         
         if temp_var is None:
-            # Fallback: just take first variable
-            temp_var = list(ds.data_vars)[0]
-            print(f"Note: using variable '{temp_var}' (not t2m)")
+            # Fallback: use first variable that's not a coordinate
+            for var_name in ds.data_vars:
+                if var_name not in ['latitude', 'longitude']:
+                    temp_var = var_name
+                    break
+        
+        if temp_var is None:
+            raise ValueError("Could not find temperature variable in GRIB file")
+            
+        print(f"Using variable: {temp_var}")
         
         # Get lat/lon coordinates and temperature data
         lats = ds.coords['latitude'].values
@@ -153,6 +159,7 @@ def read_grib_with_cfgrib(path):
                         points.append((lat, lon, float(value)))
         
         print(f"Found {len(points)} points in region")
+        ds.close()
         return points
         
     except Exception as e:

@@ -26,7 +26,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pillow cfgrib numpy
+          pip install pillow cfgrib xarray numpy
       
       - name: Download and process ICON-D2 weather data
         run: python scripts/download_icon_d2.py

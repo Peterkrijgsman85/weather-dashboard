@@ -1,0 +1,13 @@
+# Node
+node_modules/
+dist/
+.env
+.env.local
+
+# Generated GRIB index files (temporary, not needed)
+*.idx
+source-*.grib2*
+
+# But DO track PNG images and manifest
+!public/data/icon-d2/*.png
+!public/data/icon-d2/manifest.json

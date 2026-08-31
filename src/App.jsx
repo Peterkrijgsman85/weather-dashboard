@@ -43,8 +43,10 @@ function App() {
    * Load model metadata.
    */
   useEffect(() => {
+    console.log("Fetching manifest from:", DATA_URL);
     fetch(DATA_URL)
       .then((response) => {
+        console.log("Manifest response:", response.status);
         if (!response.ok) {
           throw new Error("Manifest kon niet worden geladen.");
         }
@@ -52,11 +54,12 @@ function App() {
         return response.json();
       })
       .then((data) => {
+        console.log("Manifest loaded:", data);
         setManifest(data);
         setLoading(false);
       })
       .catch((error) => {
-        console.error(error);
+        console.error("Manifest error:", error);
         setLoading(false);
       });
   }, []);
@@ -69,34 +72,51 @@ function App() {
       return;
     }
 
-    const map = L.map(mapContainerRef.current, {
-      zoomControl: false,
-      attributionControl: true,
-    });
+    // Small delay to ensure container has dimensions
+    const timer = setTimeout(() => {
+      const container = mapContainerRef.current;
+      
+      if (!container) return;
+      
+      console.log("Map container dimensions:", {
+        width: container.offsetWidth,
+        height: container.offsetHeight,
+      });
 
-    L.control.zoom({
-      position: "bottomright",
-    }).addTo(map);
+      const map = L.map(container, {
+        zoomControl: false,
+        attributionControl: true,
+      });
 
-    L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      {
-        maxZoom: 18,
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      }
-    ).addTo(map);
+      L.control.zoom({
+        position: "bottomright",
+      }).addTo(map);
 
-    map.fitBounds([
-      [50.5, 3.0],
-      [54.0, 8.0],
-    ]);
+      L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          maxZoom: 18,
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        }
+      ).addTo(map);
 
-    mapRef.current = map;
+      map.fitBounds([
+        [50.5, 3.0],
+        [54.0, 8.0],
+      ]);
+
+      mapRef.current = map;
+
+      console.log("Map initialized");
+    }, 100);
 
     return () => {
-      map.remove();
-      mapRef.current = null;
+      clearTimeout(timer);
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, []);
 

@@ -118,10 +118,15 @@ def read_grib_with_eccodes(path):
             "lat,lon,value",
             str(path),
         ],
-        check=True,
         capture_output=True,
         text=True,
     )
+
+    if result.returncode != 0:
+        print(f"Error from grib_get_data (exit code {result.returncode}):")
+        print(f"stderr: {result.stderr}")
+        print(f"stdout: {result.stdout}")
+        raise RuntimeError(f"grib_get_data failed: {result.stderr}")
 
     points = []
 

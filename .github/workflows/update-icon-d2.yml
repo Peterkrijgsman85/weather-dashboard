@@ -34,7 +34,8 @@ jobs:
       - name: Check if data changed
         id: check_changes
         run: |
-          if git diff --quiet public/data/icon-d2/; then
+          git add public/data/icon-d2/
+          if git diff --quiet --cached public/data/icon-d2/; then
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "changed=true" >> $GITHUB_OUTPUT

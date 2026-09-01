@@ -55,6 +55,14 @@ export const LAYER_CONFIG = {
     unit: "hPa",
     description: "Oppervlaktedruk herleid naar zeeniveau (isobaren)",
     legendValues: ["970", "990", "1010", "1030", "1050"],
+    renderType: "contour",
+    contourStyle: {
+      color: "#8fb8ff",
+      boldColor: "#ffffff",
+      boldEvery: 20, // elke 20 hPa (4e lijn bij interval 5) dikker + gelabeld
+      weight: 1,
+      boldWeight: 2,
+    },
   },
   pressure_surface: {
     label: "Luchtdruk (Oppervlak)",

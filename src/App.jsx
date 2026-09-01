@@ -30,10 +30,25 @@ function formatDate(iso) {
   }).format(new Date(iso));
 }
 
+function styleContourFeature(feature, contourStyle) {
+  const level = feature.properties?.level ?? 0;
+  const isBold = contourStyle?.boldEvery
+    ? Math.round(level) % contourStyle.boldEvery === 0
+    : false;
+
+  return {
+    color: isBold ? contourStyle?.boldColor : contourStyle?.color,
+    weight: isBold ? contourStyle?.boldWeight : contourStyle?.weight,
+    opacity: 0.9,
+    fillOpacity: 0,
+  };
+}
+
 function App() {
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
   const overlayRef = useRef(null);
+  const contourLayerRef = useRef(null);
 
   const [manifest, setManifest] = useState(null);
   const [timeIndex, setTimeIndex] = useState(0);
@@ -151,7 +166,7 @@ function App() {
   }, [activeLayer]);
 
   /*
-   * Update weather overlay.
+   * Update weather overlay (raster PNG of GeoJSON-contour, afhankelijk van de laag).
    */
   useEffect(() => {
     if (!manifest || !mapRef.current || currentLayerFrames.length === 0) {
@@ -159,24 +174,58 @@ function App() {
     }
 
     const frame = currentLayerFrames[timeIndex];
-
     if (!frame) {
       return;
     }
 
+    // Ruim de laag van het vorige type op zodra we wisselen tussen raster/contour.
     if (overlayRef.current) {
       overlayRef.current.remove();
+      overlayRef.current = null;
+    }
+    if (contourLayerRef.current) {
+      contourLayerRef.current.remove();
+      contourLayerRef.current = null;
     }
 
-    overlayRef.current = L.imageOverlay(
-      frame.image,
-      manifest.bounds,
-      {
-        opacity: 0.92,
-        interactive: false,
-      }
-    ).addTo(mapRef.current);
-  }, [manifest, timeIndex, currentLayerFrames]);
+    if (frame.renderType === "contour" && frame.geojson) {
+      let cancelled = false;
+
+      fetch(frame.geojson)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Contour geojson kon niet worden geladen.");
+          }
+          return response.json();
+        })
+        .then((geojsonData) => {
+          if (cancelled || !mapRef.current) return;
+
+          const contourStyle = LAYER_CONFIG[activeLayer]?.contourStyle;
+          contourLayerRef.current = L.geoJSON(geojsonData, {
+            style: (feature) => styleContourFeature(feature, contourStyle),
+          }).addTo(mapRef.current);
+        })
+        .catch((error) => {
+          console.error("Contour load error:", error);
+        });
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (frame.image) {
+      overlayRef.current = L.imageOverlay(
+        frame.image,
+        manifest.bounds,
+        {
+          opacity: 0.92,
+          interactive: false,
+        }
+      ).addTo(mapRef.current);
+    }
+  }, [manifest, timeIndex, currentLayerFrames, activeLayer]);
 
   /*
    * Playback.

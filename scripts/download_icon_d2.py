@@ -6,8 +6,19 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import contourpy
 import numpy as np
 from PIL import Image
+
+
+# Variabelen die als vector-contouren (GeoJSON) worden gerenderd i.p.v. raster-PNG.
+# Uitbreidbaar: later bv. neerslagzones hier ook aan toevoegen.
+CONTOUR_VARIABLES = {
+    "pmsl": {
+        "interval": 5,       # isobaar elke 5 hPa (standaard synoptische kaarten)
+        "unit_divisor": 100,  # GRIB levert Pa, isobaren tonen we in hPa
+    },
+}
 
 
 DWD_BASE = "https://opendata.dwd.de/weather/nwp/icon-d2/grib"
@@ -769,6 +780,95 @@ def read_grib_with_cfgrib(path):
         raise
 
 
+def read_grib_grid_with_cfgrib(path):
+    """
+    Parse GRIB2 file als een regulier 2D-grid (i.p.v. platgeslagen puntenlijst).
+    Nodig voor contour-generatie: marching squares werkt op een grid, niet op
+    losse (lat, lon, waarde) punten.
+
+    Returns:
+        lats_axis: 1D array, oplopend, alleen de rijen binnen de regio
+        lons_axis: 1D array, oplopend, alleen de kolommen binnen de regio
+        values_grid: 2D array, shape (len(lats_axis), len(lons_axis))
+    """
+    import xarray as xr
+
+    ds = xr.open_dataset(str(path), engine="cfgrib")
+
+    data_var = None
+    for var_name in ds.data_vars:
+        if var_name not in ["latitude", "longitude"]:
+            data_var = var_name
+            break
+
+    if data_var is None:
+        raise ValueError("Could not find data variable in GRIB file")
+
+    lats_axis = ds.coords["latitude"].values
+    lons_axis = ds.coords["longitude"].values
+    data = ds[data_var]
+
+    values_grid = data.values[0] if len(data.shape) > 2 else data.values
+
+    # ICON-D2 lat-as loopt vaak aflopend (noord -> zuid); contourpy en Leaflet
+    # verwachten oplopende assen, dus indien nodig omdraaien.
+    if lats_axis[0] > lats_axis[-1]:
+        lats_axis = lats_axis[::-1]
+        values_grid = values_grid[::-1, :]
+
+    # Clip naar de regio via index-slicing (behoudt de 2D grid-structuur,
+    # in tegenstelling tot de boolean mask die read_grib_with_cfgrib gebruikt).
+    lat_mask = (lats_axis >= MIN_LAT) & (lats_axis <= MAX_LAT)
+    lon_mask = (lons_axis >= MIN_LON) & (lons_axis <= MAX_LON)
+
+    lats_axis = lats_axis[lat_mask]
+    lons_axis = lons_axis[lon_mask]
+    values_grid = values_grid[np.ix_(lat_mask, lon_mask)]
+
+    ds.close()
+
+    return lats_axis, lons_axis, values_grid
+
+
+def generate_contour_geojson(lats_axis, lons_axis, values_grid, output_file, interval, unit_divisor=1):
+    """
+    Genereert isolijnen (bv. isobaren) als GeoJSON LineStrings uit een 2D-grid,
+    via marching squares (contourpy - dezelfde engine als matplotlib.contour()).
+
+    Elke lijn krijgt een "level"-property zodat de frontend kan stylen
+    (bv. elke 4e isobaar dikker, of een waarde-label tonen).
+    """
+    values = values_grid / unit_divisor
+
+    vmin = np.floor(np.nanmin(values) / interval) * interval
+    vmax = np.ceil(np.nanmax(values) / interval) * interval
+    levels = np.arange(vmin, vmax + interval, interval)
+
+    cg = contourpy.contour_generator(x=lons_axis, y=lats_axis, z=values)
+
+    features = []
+    for level in levels:
+        lines = cg.lines(float(level))
+        for line in lines:
+            if len(line) < 2:
+                continue
+            coords = [[round(float(x), 4), round(float(y), 4)] for x, y in line]
+            features.append(
+                {
+                    "type": "Feature",
+                    "properties": {"level": round(float(level), 1)},
+                    "geometry": {"type": "LineString", "coordinates": coords},
+                }
+            )
+
+    geojson = {"type": "FeatureCollection", "features": features}
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(geojson, f)
+
+    return len(features)
+
+
 def create_overlay(lats, lons, values, output_file, value_to_rgba):
     """
     Creates a transparent PNG with vectorized NumPy operations.
@@ -872,7 +972,8 @@ def main():
         var_dir.mkdir(parents=True, exist_ok=True)
 
         frames = []
-        value_to_rgba = get_value_to_rgba(variable)
+        is_contour_variable = variable in CONTOUR_VARIABLES
+        value_to_rgba = None if is_contour_variable else get_value_to_rgba(variable)
 
         for index, filename in enumerate(files):
 
@@ -884,11 +985,6 @@ def main():
             local_grib = (
                 var_dir
                 / f"source-{index:03d}.grib2"
-            )
-
-            output_png = (
-                var_dir
-                / f"{index:03d}.png"
             )
 
             url = (
@@ -918,17 +1014,48 @@ def main():
 
             print(f"Reading GRIB... ({variable})")
 
-            lats, lons, values = read_grib_with_cfgrib(
-                local_grib
-            )
+            if is_contour_variable:
+                contour_settings = CONTOUR_VARIABLES[variable]
+                output_geojson = var_dir / f"{index:03d}.geojson"
 
-            create_overlay(
-                lats,
-                lons,
-                values,
-                output_png,
-                value_to_rgba,
-            )
+                lats_axis, lons_axis, values_grid = read_grib_grid_with_cfgrib(
+                    local_grib
+                )
+
+                n_lines = generate_contour_geojson(
+                    lats_axis,
+                    lons_axis,
+                    values_grid,
+                    output_geojson,
+                    interval=contour_settings["interval"],
+                    unit_divisor=contour_settings["unit_divisor"],
+                )
+
+                print(f"Generated {n_lines} contour lines")
+
+                frame_entry = {
+                    "geojson": f"/data/icon-d2/{variable}/{index:03d}.geojson",
+                    "renderType": "contour",
+                }
+            else:
+                output_png = var_dir / f"{index:03d}.png"
+
+                lats, lons, values = read_grib_with_cfgrib(
+                    local_grib
+                )
+
+                create_overlay(
+                    lats,
+                    lons,
+                    values,
+                    output_png,
+                    value_to_rgba,
+                )
+
+                frame_entry = {
+                    "image": f"/data/icon-d2/{variable}/{index:03d}.png",
+                    "renderType": "raster",
+                }
 
             # Forecast hour is encoded in filename
             match = re.search(
@@ -946,13 +1073,14 @@ def main():
             # Calculate valid time: run time + forecast hours
             valid_time = run_datetime + timedelta(hours=forecast_hour)
 
-            frames.append(
+            frame_entry.update(
                 {
                     "forecastHour": forecast_hour,
                     "validTime": valid_time.isoformat(),
-                    "image": f"/data/icon-d2/{variable}/{index:03d}.png",
                 }
             )
+
+            frames.append(frame_entry)
 
             local_bz2.unlink(
                 missing_ok=True
@@ -964,6 +1092,7 @@ def main():
 
         all_variables_data[variable] = {
             "frames": frames,
+            "renderType": "contour" if is_contour_variable else "raster",
             "generatedAt": datetime.now(timezone.utc).isoformat(),
         }
 

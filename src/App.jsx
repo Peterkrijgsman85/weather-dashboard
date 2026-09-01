@@ -14,6 +14,39 @@ L.Icon.Default.mergeOptions({
 
 const DATA_URL = "/data/icon-d2/manifest.json";
 
+const LAYER_CONFIG = {
+  temperature: {
+    label: "Temperature",
+    variable: "t_2m",
+    unit: "°C",
+    legendValues: ["-5", "0", "5", "10", "15", "20", "25", "30"],
+  },
+  humidity: {
+    label: "Humidity",
+    variable: "rh_2m",
+    unit: "%",
+    legendValues: ["0", "20", "40", "60", "80", "100"],
+  },
+  precipitation: {
+    label: "Neerslag",
+    variable: "tot_prec",
+    unit: "mm",
+    legendValues: ["0", "1", "5", "10", "20"],
+  },
+  wind: {
+    label: "Wind",
+    variable: "u_10m",
+    unit: "m/s",
+    legendValues: ["0", "5", "10", "15", "25"],
+  },
+  clouds: {
+    label: "Clouds",
+    variable: "clct",
+    unit: "%",
+    legendValues: ["0", "20", "40", "60", "80", "100"],
+  },
+};
+
 function formatTime(iso) {
   return new Intl.DateTimeFormat("nl-NL", {
     hour: "2-digit",
@@ -38,6 +71,7 @@ function App() {
   const [timeIndex, setTimeIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeLayer, setActiveLayer] = useState("temperature");
 
   /*
    * Load model metadata.
@@ -70,7 +104,6 @@ function App() {
   useEffect(() => {
     // Only initialize after component has rendered
     if (!mapContainerRef.current || mapRef.current) {
-      console.log("Early return - container:", !!mapContainerRef.current, "mapRef.current:", !!mapRef.current);
       return;
     }
 
@@ -81,8 +114,6 @@ function App() {
     console.log("Map container dimensions:", {
       width: container.offsetWidth,
       height: container.offsetHeight,
-      display: window.getComputedStyle(container).display,
-      position: window.getComputedStyle(container).position,
     });
 
     try {
@@ -98,11 +129,11 @@ function App() {
       }).addTo(map);
 
       L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
         {
           maxZoom: 18,
           attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
         }
       ).addTo(map);
 
@@ -126,14 +157,36 @@ function App() {
   }, [manifest]);
 
   /*
+   * Get current frames for active layer
+   */
+  const currentLayerFrames = useMemo(() => {
+    if (!manifest || !activeLayer) {
+      return [];
+    }
+
+    const config = LAYER_CONFIG[activeLayer];
+    if (!config) return [];
+
+    const variable = config.variable;
+    return manifest.variables?.[variable]?.frames || [];
+  }, [manifest, activeLayer]);
+
+  /*
+   * Reset timeIndex when layer changes
+   */
+  useEffect(() => {
+    setTimeIndex(0);
+  }, [activeLayer]);
+
+  /*
    * Update weather overlay.
    */
   useEffect(() => {
-    if (!manifest || !mapRef.current) {
+    if (!manifest || !mapRef.current || currentLayerFrames.length === 0) {
       return;
     }
 
-    const frame = manifest.frames[timeIndex];
+    const frame = currentLayerFrames[timeIndex];
 
     if (!frame) {
       return;
@@ -151,19 +204,19 @@ function App() {
         interactive: false,
       }
     ).addTo(mapRef.current);
-  }, [manifest, timeIndex]);
+  }, [manifest, timeIndex, currentLayerFrames]);
 
   /*
    * Playback.
    */
   useEffect(() => {
-    if (!playing || !manifest) {
+    if (!playing || currentLayerFrames.length === 0) {
       return;
     }
 
     const timer = setInterval(() => {
       setTimeIndex((current) => {
-        if (current >= manifest.frames.length - 1) {
+        if (current >= currentLayerFrames.length - 1) {
           setPlaying(false);
           return current;
         }
@@ -173,17 +226,13 @@ function App() {
     }, 500);
 
     return () => clearInterval(timer);
-  }, [playing, manifest]);
+  }, [playing, currentLayerFrames]);
 
   const currentFrame = useMemo(() => {
-    return manifest?.frames?.[timeIndex];
-  }, [manifest, timeIndex]);
+    return currentLayerFrames?.[timeIndex];
+  }, [currentLayerFrames, timeIndex]);
 
-  // Debug effect
-  useEffect(() => {
-    console.log("mapContainerRef.current:", mapContainerRef.current);
-    console.log("mapRef.current:", mapRef.current);
-  }, []);
+  const layerConfig = LAYER_CONFIG[activeLayer];
 
   if (loading) {
     return (
@@ -196,7 +245,7 @@ function App() {
     );
   }
 
-  if (!manifest) {
+  if (!manifest || Object.keys(manifest.variables || {}).length === 0) {
     return (
       <div className="loading">
         <div className="loading-title">Geen modeldata</div>
@@ -239,12 +288,10 @@ function App() {
           className="map"
         />
 
-        {!mapRef.current && <div style={{position: 'absolute', top: 10, left: 10, color: 'red', zIndex: 9999, fontSize: '12px'}}>Map not initialized</div>}
-
         <div className="map-status">
 
           <div className="status-model">
-            ICON-D2
+            {layerConfig?.label || "ICON-D2"}
           </div>
 
           <div className="status-divider" />
@@ -266,20 +313,15 @@ function App() {
         <div className="legend">
 
           <div className="legend-title">
-            TEMPERATURE · °C
+            {layerConfig?.label || "Data"} · {layerConfig?.unit || ""}
           </div>
 
           <div className="legend-gradient" />
 
           <div className="legend-values">
-            <span>-5</span>
-            <span>0</span>
-            <span>5</span>
-            <span>10</span>
-            <span>15</span>
-            <span>20</span>
-            <span>25</span>
-            <span>30</span>
+            {layerConfig?.legendValues?.map((val) => (
+              <span key={val}>{val}</span>
+            ))}
           </div>
 
         </div>
@@ -294,21 +336,19 @@ function App() {
             LAYER
           </div>
 
-          <button className="layer active">
-            Temperature
-          </button>
-
-          <button className="layer disabled">
-            Neerslag
-          </button>
-
-          <button className="layer disabled">
-            Wind
-          </button>
-
-          <button className="layer disabled">
-            CAPE
-          </button>
+          {Object.entries(LAYER_CONFIG).map(([key, config]) => {
+            const hasData = manifest.variables?.[config.variable];
+            return (
+              <button
+                key={key}
+                className={`layer ${activeLayer === key ? "active" : ""} ${!hasData ? "disabled" : ""}`}
+                onClick={() => hasData && setActiveLayer(key)}
+                disabled={!hasData}
+              >
+                {config.label}
+              </button>
+            );
+          })}
 
           <div className="coming-soon">
             meer lagen volgen
@@ -323,7 +363,7 @@ function App() {
             onClick={() => {
               if (
                 timeIndex >=
-                manifest.frames.length - 1
+                currentLayerFrames.length - 1
               ) {
                 setTimeIndex(0);
               }
@@ -339,7 +379,7 @@ function App() {
             <input
               type="range"
               min="0"
-              max={manifest.frames.length - 1}
+              max={Math.max(0, currentLayerFrames.length - 1)}
               value={timeIndex}
               onChange={(event) => {
                 setPlaying(false);
@@ -351,7 +391,7 @@ function App() {
 
             <div className="timeline-labels">
 
-              {manifest.frames.map((frame, index) => (
+              {currentLayerFrames.map((frame, index) => (
                 <span key={frame.validTime}>
                   {index % 3 === 0
                     ? formatTime(frame.validTime)

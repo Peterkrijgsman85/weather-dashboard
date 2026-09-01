@@ -277,13 +277,37 @@ def read_grib_with_cfgrib(path):
         # Get lat/lon coordinates and data
         lats = ds.coords['latitude'].values
         lons = ds.coords['longitude'].values
-        values = ds[data_var].values
+        data = ds[data_var]
         
-        # Vectorized: create meshgrid and flatten
-        lon_grid, lat_grid = np.meshgrid(lons, lats)
+        # Handle multi-dimensional data (e.g., time dimension)
+        # If there are extra dimensions, take the first timestep
+        if len(data.shape) > 2:
+            print(f"Data has {len(data.shape)} dimensions, shape: {data.shape}")
+            # Take first time step if data has time dimension
+            values = data.values[0]
+        else:
+            values = data.values
+        
+        print(f"Grid shape: {values.shape}, lat shape: {lats.shape}, lon shape: {lons.shape}")
+        
+        # Ensure lat/lon grids match data shape
+        if lats.shape[0] != values.shape[0] or lons.shape[0] != values.shape[1]:
+            print(f"Warning: Shape mismatch. Regridding...")
+            # Create meshgrid matching the actual data shape
+            lon_grid, lat_grid = np.meshgrid(lons, lats)
+        else:
+            lon_grid, lat_grid = np.meshgrid(lons, lats)
+        
+        # Flatten all arrays
         lat_flat = lat_grid.flatten()
         lon_flat = lon_grid.flatten()
         val_flat = values.flatten()
+        
+        # Ensure all have same length
+        min_len = min(len(lat_flat), len(lon_flat), len(val_flat))
+        lat_flat = lat_flat[:min_len]
+        lon_flat = lon_flat[:min_len]
+        val_flat = val_flat[:min_len]
         
         # Vectorized filtering: create mask for region + valid values
         mask = (

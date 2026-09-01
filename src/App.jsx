@@ -210,13 +210,13 @@ function App() {
         position: "bottomright",
       }).addTo(map);
 
-      // Use OpenTopoMap as base layer (no API key needed, dark theme good for overlays)
+      // Use ESRI Satellite imagery as base layer
       L.tileLayer(
-        "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         {
-          maxZoom: 17,
+          maxZoom: 18,
           attribution:
-            'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+            'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
         }
       ).addTo(map);
 

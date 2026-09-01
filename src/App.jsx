@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
+import { LAYER_CONFIG } from "./layerConfig";
 
 // Fix Leaflet marker icons in Vite
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -13,121 +14,6 @@ L.Icon.Default.mergeOptions({
 });
 
 const DATA_URL = "/data/icon-d2/manifest.json";
-
-const LAYER_CONFIG = {
-  temperature: {
-    label: "Temperatuur",
-    variable: "t_2m",
-    unit: "°C",
-    description: "Luchttemperatuur op 2 meter hoogte",
-    legendValues: ["-5", "0", "5", "10", "15", "20", "25", "30"],
-  },
-  dewpoint: {
-    label: "Dauwpunt",
-    variable: "td_2m",
-    unit: "°C",
-    description: "Temperatuur waarop lucht verzadigd wordt (condensatie optreedt)",
-    legendValues: ["-10", "-5", "0", "5", "10", "15", "20"],
-  },
-  humidity: {
-    label: "Luchtvochtigheid",
-    variable: "rh_2m",
-    unit: "%",
-    description: "Relatieve luchtvochtigheid op 2 meter hoogte",
-    legendValues: ["0", "20", "40", "60", "80", "100"],
-  },
-  wind: {
-    label: "Wind (O-W)",
-    variable: "u_10m",
-    unit: "m/s",
-    description: "Windsnelheid oost-west component op 10 meter hoogte",
-    legendValues: ["0", "5", "10", "15", "25"],
-  },
-  wind_v: {
-    label: "Wind (N-Z)",
-    variable: "v_10m",
-    unit: "m/s",
-    description: "Windsnelheid noord-zuid component op 10 meter hoogte",
-    legendValues: ["0", "5", "10", "15", "25"],
-  },
-  windgust: {
-    label: "Windstoten",
-    variable: "vmax_10m",
-    unit: "m/s",
-    description: "Maximale windstoten op 10 meter hoogte - kritiek voor onweer",
-    legendValues: ["0", "5", "10", "15", "25", "40"],
-  },
-  precipitation: {
-    label: "Neerslag",
-    variable: "tot_prec",
-    unit: "mm",
-    description: "Totale verwachte neerslag (regen + sneeuw) in volgende uur",
-    legendValues: ["0", "1", "5", "10", "20"],
-  },
-  snow: {
-    label: "Sneeuw",
-    variable: "snow",
-    unit: "cm",
-    description: "Verwachte sneeuwdiepte",
-    legendValues: ["0", "2", "5", "10", "20", "30"],
-  },
-  hail: {
-    label: "Hagel",
-    variable: "hail_con",
-    unit: "%",
-    description: "Hagelwaarschijnlijkheid - cruciaal voor severe weather",
-    legendValues: ["0", "10", "25", "50", "75", "100"],
-  },
-  clouds_total: {
-    label: "Bewolking (totaal)",
-    variable: "clct",
-    unit: "%",
-    description: "Totale wolkenbedekkking van de lucht",
-    legendValues: ["0", "20", "40", "60", "80", "100"],
-  },
-  clouds_high: {
-    label: "Hoge wolken",
-    variable: "hcdc",
-    unit: "%",
-    description: "Hoge wolken (> 6km) - cirruswolken en dergelijke",
-    legendValues: ["0", "20", "40", "60", "80", "100"],
-  },
-  clouds_mid: {
-    label: "Middelbare wolken",
-    variable: "mcdc",
-    unit: "%",
-    description: "Middelbare wolken (2-6km) - altocumuluswolken",
-    legendValues: ["0", "20", "40", "60", "80", "100"],
-  },
-  clouds_low: {
-    label: "Lage wolken",
-    variable: "lcdc",
-    unit: "%",
-    description: "Lage wolken (< 2km) - cumulus en stratocumuluswolken",
-    legendValues: ["0", "20", "40", "60", "80", "100"],
-  },
-  cape: {
-    label: "CAPE",
-    variable: "cape_ml",
-    unit: "J/kg",
-    description: "Convectieve potentiële energie - index voor onweersgevoeligheid",
-    legendValues: ["0", "500", "1000", "2000", "3500"],
-  },
-  lifted_index: {
-    label: "Lifted Index",
-    variable: "li",
-    unit: "K",
-    description: "Atmosferische stabiliteit - negatief = onweersgevoelig",
-    legendValues: ["-10", "-5", "0", "5", "10"],
-  },
-  pressure: {
-    label: "Luchtdruk",
-    variable: "p_sfc",
-    unit: "hPa",
-    description: "Oppervlaktedruk - groen=hoge druk, rood=lage druk",
-    legendValues: ["970", "990", "1010", "1030", "1050"],
-  },
-};
 
 function formatTime(iso) {
   return new Intl.DateTimeFormat("nl-NL", {
@@ -210,13 +96,13 @@ function App() {
         position: "bottomright",
       }).addTo(map);
 
-      // Use ESRI Satellite imagery as base layer
+      // Use ESRI Light Gray Canvas as base layer
       L.tileLayer(
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
         {
-          maxZoom: 18,
+          maxZoom: 16,
           attribution:
-            'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
         }
       ).addTo(map);
 

@@ -15,31 +15,74 @@ DWD_BASE = "https://opendata.dwd.de/weather/nwp/icon-d2/grib"
 RUN = None  # Will be auto-detected
 
 VARIABLES = [
-    # Temperature & Moisture
-    "t_2m",       # Temperature 2m
-    "td_2m",      # Dew point 2m
-    "rh_2m",      # Relative humidity 2m
+    # Basis & Gevoel (Dagelijkse weer)
+    "t_2m",           # Temperature 2m
+    "td_2m",          # Dew point 2m
+    "tmax_2m",        # Max temperature 2m
+    "tmin_2m",        # Min temperature 2m
+    "u_10m",          # U wind 10m
+    "v_10m",          # V wind 10m
+    "vmax_10m",       # Max wind gust 10m
+    "pmsl",           # Pressure MSL (sea level)
+    "ps",             # Surface pressure
+    "ww",             # Weather code
+    "vis",            # Visibility
     
-    # Wind
-    "u_10m",      # U wind 10m
-    "v_10m",      # V wind 10m
-    "vmax_10m",   # Wind gust 10m (severe weather critical)
+    # Neerslag & Buienradar
+    "tot_prec",       # Total precipitation
+    "rain_gsp",       # Large-scale rain
+    "snow_gsp",       # Large-scale snow
+    "rain_con",       # Convective rain (showers)
+    "snow_con",       # Convective snow
+    "prg_gsp",        # Graupel intensity
+    "prr_gsp",        # Rain intensity
+    "prs_gsp",        # Snow intensity
+    "dbz_cmax",       # Composite radar reflectivity (BUIENRADAR!)
+    "dbz_850",        # Radar reflectivity 850 hPa
+    "grau_gsp",       # Graupel/hail at surface
+    "runoff_g",       # Ground runoff
+    "runoff_s",       # Surface runoff
     
-    # Precipitation
-    "tot_prec",   # Total precipitation
-    "snow",       # Snow depth/fall
-    "hail_con",   # Hail (severe weather)
+    # Bewolking & Wolkenopbouw
+    "clct",           # Total cloud cover
+    "clct_mod",       # Modified total cloud
+    "clcl",           # Low cloud
+    "clcm",           # Mid cloud
+    "clch",           # High cloud
+    "ceiling",        # Cloud base height
+    "cldepth",        # Cloud depth
+    "hbas_sc",        # Stratocumulus base
+    "htop_sc",        # Stratocumulus top
+    "htop_dc",        # Deep convection top
     
-    # Clouds
-    "clct",       # Total cloud cover
-    "hcdc",       # High cloud cover
-    "mcdc",       # Mid cloud cover
-    "lcdc",       # Low cloud cover
+    # Onweer & Noodweer
+    "cape_ml",        # CAPE mixed layer
+    "cin_ml",         # Convective inhibition
+    "lpi",            # Lightning potential index
+    "lpi_max",        # Max LPI
+    "uh_max",         # Max updraft helicity
+    "uh_max_low",     # Updraft helicity low level
+    "uh_max_med",     # Updraft helicity mid level
+    "echotop",        # Echo top height
     
-    # Severe Weather Indices
-    "cape_ml",    # CAPE mixed layer
-    "li",         # Lifted index
-    "p_sfc",      # Surface pressure
+    # Luchtmassa & Vocht
+    "relhum",         # Relative humidity (general)
+    "relhum_2m",      # Relative humidity 2m
+    "qv_s",           # Specific humidity surface
+    "tqv",            # Total column water vapor
+    "twater",         # Total integrated water
+    "tqc",            # Column cloud water
+    "tqg",            # Column graupel
+    "tqi",            # Column ice
+    "tqr",            # Column rain
+    "tqs",            # Column snow
+    
+    # Specialistische extra's
+    "hzerocl",        # 0°C isotherm height
+    "snowc",          # Snow cover
+    "snowlmt",        # Snow limit height
+    "t_wml_lk",       # Lake water temp
+    "z0",             # Roughness length
 ]
 
 OUTPUT_DIR = Path("public/data/icon-d2")
@@ -403,36 +446,244 @@ def lifted_index_to_rgba_vectorized(values):
     return colors
 
 
+def radar_reflectivity_to_rgba_vectorized(values):
+    """Vectorized DBZ (radar reflectivity) to RGBA (-10 to 60 dBZ). Classic radar colors."""
+    dbz = np.clip(values, -10, 60)
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    stops = [
+        (-10, np.array([0, 0, 0])),         # No echo: black/transparent
+        (5, np.array([102, 204, 255])),     # Weak: light blue
+        (15, np.array([0, 255, 0])),        # Light: green
+        (25, np.array([255, 255, 0])),      # Moderate: yellow
+        (35, np.array([255, 165, 0])),      # Strong: orange
+        (45, np.array([255, 0, 0])),        # Very strong: red
+        (60, np.array([139, 0, 139])),      # Extreme: magenta
+    ]
+    
+    for i in range(len(stops) - 1):
+        val_a, col_a = stops[i]
+        val_b, col_b = stops[i + 1]
+        mask = (dbz > val_a) & (dbz <= val_b)
+        if np.any(mask):
+            fraction = (dbz[mask] - val_a) / (val_b - val_a)
+            for c in range(3):
+                colors[mask, c] = (col_a[c] + (col_b[c] - col_a[c]) * fraction).astype(np.uint8)
+            colors[mask, 3] = 255
+    
+    mask_none = dbz <= stops[0][0]
+    colors[mask_none, 3] = 0
+    
+    mask_extreme = dbz >= stops[-1][0]
+    colors[mask_extreme, :3] = stops[-1][1]
+    colors[mask_extreme, 3] = 255
+    
+    return colors
+
+
+def lpi_to_rgba_vectorized(values):
+    """Vectorized Lightning Potential Index (0-150). Yellow->Red scale for lightning risk."""
+    lpi = np.clip(values, 0, 150)
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    # 0 = yellow, 75 = orange, 150 = red
+    r = np.clip(150 + (lpi * 0.7), 0, 255).astype(np.uint8)
+    g = np.clip(200 - (lpi * 1.5), 0, 255).astype(np.uint8)
+    b = np.clip(50 - (lpi * 0.3), 0, 255).astype(np.uint8)
+    
+    colors[:, 0] = r
+    colors[:, 1] = g
+    colors[:, 2] = b
+    colors[:, 3] = 255
+    
+    return colors
+
+
+def updraft_helicity_to_rgba_vectorized(values):
+    """Vectorized UH (0-300 m²/s²). Red scale for rotation/supercells."""
+    uh = np.clip(values, 0, 300)
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    # 0 = blue, 100 = green, 200 = orange, 300 = red
+    stops = [
+        (0, np.array([50, 100, 255])),      # Weak: blue
+        (75, np.array([100, 200, 100])),    # Light: green
+        (150, np.array([255, 165, 0])),     # Moderate: orange
+        (250, np.array([255, 0, 0])),       # Strong: red
+        (300, np.array([139, 0, 0])),       # Extreme: dark red
+    ]
+    
+    for i in range(len(stops) - 1):
+        val_a, col_a = stops[i]
+        val_b, col_b = stops[i + 1]
+        mask = (uh > val_a) & (uh <= val_b)
+        if np.any(mask):
+            fraction = (uh[mask] - val_a) / (val_b - val_a)
+            for c in range(3):
+                colors[mask, c] = (col_a[c] + (col_b[c] - col_a[c]) * fraction).astype(np.uint8)
+            colors[mask, 3] = 255
+    
+    mask_extreme = uh >= stops[-1][0]
+    colors[mask_extreme, :3] = stops[-1][1]
+    colors[mask_extreme, 3] = 255
+    
+    return colors
+
+
+def visibility_to_rgba_vectorized(values):
+    """Vectorized visibility (0-20 km). Blue for poor, green for good visibility."""
+    vis_km = np.clip(values / 1000, 0, 20)  # Convert m to km
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    # 0 km = red (fog), 10 km = yellow, 20 km = green
+    r = np.clip(255 - (vis_km * 12), 0, 255).astype(np.uint8)
+    g = np.clip(100 + (vis_km * 7), 0, 255).astype(np.uint8)
+    b = np.clip(100 - (vis_km * 5), 0, 255).astype(np.uint8)
+    
+    colors[:, 0] = r
+    colors[:, 1] = g
+    colors[:, 2] = b
+    colors[:, 3] = 255
+    
+    return colors
+
+
+def height_to_rgba_vectorized(values):
+    """Vectorized height/altitude (0-5000m). Purple to blue scale."""
+    h = np.clip(values, 0, 5000)
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    # 0m = purple, 2500m = blue, 5000m = cyan
+    norm = h / 5000
+    r = np.clip(200 * (1 - norm), 0, 255).astype(np.uint8)
+    g = np.clip(100 + norm * 155, 0, 255).astype(np.uint8)
+    b = 255
+    
+    colors[:, 0] = r
+    colors[:, 1] = g
+    colors[:, 2] = b
+    colors[:, 3] = 255
+    
+    return colors
+
+
+def column_water_to_rgba_vectorized(values):
+    """Vectorized column water (0-80 kg/m²). Blue for dry, green for wet."""
+    water = np.clip(values, 0, 80)
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    # 0 = blue (dry), 40 = green, 80 = brown (very wet)
+    r = np.clip(water * 2, 0, 255).astype(np.uint8)
+    g = np.clip(100 + water * 1.5, 0, 255).astype(np.uint8)
+    b = np.clip(255 - water * 2, 0, 255).astype(np.uint8)
+    
+    colors[:, 0] = r
+    colors[:, 1] = g
+    colors[:, 2] = b
+    colors[:, 3] = 255
+    
+    return colors
+
+
+def weather_code_to_rgba_vectorized(values):
+    """Vectorized weather code (ww). Show actual weather condition colors."""
+    ww = values.astype(int)
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    # Simplified WMO weather codes
+    # 0 = clear, 1-2 = cloudy, 3-4 = fog, 5-8 = drizzle, 9-22 = rain, 23-29 = snow/sleet, 30-39 = thunderstorm
+    for i, code in enumerate(ww):
+        if code == 0:
+            colors[i] = [255, 255, 200, 100]  # Clear: light yellow
+        elif code <= 2:
+            colors[i] = [200, 200, 200, 150]  # Cloudy: gray
+        elif code <= 4:
+            colors[i] = [180, 180, 150, 200]  # Fog: brown-gray
+        elif code <= 8:
+            colors[i] = [100, 150, 200, 220]  # Drizzle: light blue
+        elif code <= 22:
+            colors[i] = [50, 100, 200, 255]   # Rain: blue
+        elif code <= 29:
+            colors[i] = [200, 200, 255, 255]  # Snow: white-blue
+        else:
+            colors[i] = [255, 0, 200, 255]    # Thunderstorm: magenta
+    
+    return colors
+
+
 def get_value_to_rgba(variable):
     """
     Return the appropriate vectorized color mapping function for a variable.
     """
     mappings = {
-        # Temperature & Moisture
+        # Basis & Gevoel
         "t_2m": temperature_to_rgba_vectorized,
         "td_2m": temperature_to_rgba_vectorized,
-        "rh_2m": humidity_to_rgba_vectorized,
-        
-        # Wind
+        "tmax_2m": temperature_to_rgba_vectorized,
+        "tmin_2m": temperature_to_rgba_vectorized,
         "u_10m": wind_to_rgba_vectorized,
         "v_10m": wind_to_rgba_vectorized,
         "vmax_10m": windgust_to_rgba_vectorized,
+        "pmsl": pressure_to_rgba_vectorized,
+        "ps": pressure_to_rgba_vectorized,
+        "ww": weather_code_to_rgba_vectorized,
+        "vis": visibility_to_rgba_vectorized,
         
-        # Precipitation
+        # Neerslag & Buienradar
         "tot_prec": precipitation_to_rgba_vectorized,
-        "snow": snow_to_rgba_vectorized,
-        "hail_con": hail_to_rgba_vectorized,
+        "rain_gsp": precipitation_to_rgba_vectorized,
+        "snow_gsp": precipitation_to_rgba_vectorized,
+        "rain_con": precipitation_to_rgba_vectorized,
+        "snow_con": precipitation_to_rgba_vectorized,
+        "prg_gsp": precipitation_to_rgba_vectorized,
+        "prr_gsp": precipitation_to_rgba_vectorized,
+        "prs_gsp": precipitation_to_rgba_vectorized,
+        "dbz_cmax": radar_reflectivity_to_rgba_vectorized,
+        "dbz_850": radar_reflectivity_to_rgba_vectorized,
+        "grau_gsp": precipitation_to_rgba_vectorized,
+        "runoff_g": precipitation_to_rgba_vectorized,
+        "runoff_s": precipitation_to_rgba_vectorized,
         
-        # Clouds
+        # Bewolking & Wolkenopbouw
         "clct": cloud_to_rgba_vectorized,
-        "hcdc": cloud_to_rgba_vectorized,
-        "mcdc": cloud_to_rgba_vectorized,
-        "lcdc": cloud_to_rgba_vectorized,
+        "clct_mod": cloud_to_rgba_vectorized,
+        "clcl": cloud_to_rgba_vectorized,
+        "clcm": cloud_to_rgba_vectorized,
+        "clch": cloud_to_rgba_vectorized,
+        "ceiling": height_to_rgba_vectorized,
+        "cldepth": height_to_rgba_vectorized,
+        "hbas_sc": height_to_rgba_vectorized,
+        "htop_sc": height_to_rgba_vectorized,
+        "htop_dc": height_to_rgba_vectorized,
         
-        # Severe Weather Indices
+        # Onweer & Noodweer
         "cape_ml": cape_to_rgba_vectorized,
-        "li": lifted_index_to_rgba_vectorized,
-        "p_sfc": pressure_to_rgba_vectorized,
+        "cin_ml": height_to_rgba_vectorized,
+        "lpi": lpi_to_rgba_vectorized,
+        "lpi_max": lpi_to_rgba_vectorized,
+        "uh_max": updraft_helicity_to_rgba_vectorized,
+        "uh_max_low": updraft_helicity_to_rgba_vectorized,
+        "uh_max_med": updraft_helicity_to_rgba_vectorized,
+        "echotop": height_to_rgba_vectorized,
+        
+        # Luchtmassa & Vocht
+        "relhum": humidity_to_rgba_vectorized,
+        "relhum_2m": humidity_to_rgba_vectorized,
+        "qv_s": column_water_to_rgba_vectorized,
+        "tqv": column_water_to_rgba_vectorized,
+        "twater": column_water_to_rgba_vectorized,
+        "tqc": column_water_to_rgba_vectorized,
+        "tqg": column_water_to_rgba_vectorized,
+        "tqi": column_water_to_rgba_vectorized,
+        "tqr": column_water_to_rgba_vectorized,
+        "tqs": column_water_to_rgba_vectorized,
+        
+        # Specialistische extra's
+        "hzerocl": height_to_rgba_vectorized,
+        "snowc": humidity_to_rgba_vectorized,
+        "snowlmt": height_to_rgba_vectorized,
+        "t_wml_lk": temperature_to_rgba_vectorized,
+        "z0": height_to_rgba_vectorized,
     }
     
     return mappings.get(variable, temperature_to_rgba_vectorized)

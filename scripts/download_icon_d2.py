@@ -62,14 +62,15 @@ def get_latest_run():
         # ICON-D2 runs at 00, 06, 12, 18
         if run_hour % 6 == 0:
             run_str = test_time.strftime("%Y%m%d%H")
-            test_url = f"{DWD_BASE}/{run_str:[-2:]}/t_2m/"
+            run_hh = run_str[-2:]  # Get HH part (00, 06, 12, 18)
+            test_url = f"{DWD_BASE}/{run_hh}/t_2m/"
             
             try:
                 html = get_directory(test_url)
                 # Check if we got valid content
                 if "icon-d2" in html:
                     print(f"Latest run found: {run_str}")
-                    return run_str[-2:]  # Return just the HH part (00, 06, 12, 18)
+                    return run_hh
             except:
                 continue
     

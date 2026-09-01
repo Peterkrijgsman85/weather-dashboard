@@ -16,33 +16,52 @@ const DATA_URL = "/data/icon-d2/manifest.json";
 
 const LAYER_CONFIG = {
   temperature: {
-    label: "Temperature",
+    label: "Temperatuur",
     variable: "t_2m",
     unit: "°C",
+    description: "Luchttemperatuur op 2 meter hoogte",
     legendValues: ["-5", "0", "5", "10", "15", "20", "25", "30"],
   },
+  dewpoint: {
+    label: "Dauwpunt",
+    variable: "td_2m",
+    unit: "°C",
+    description: "Temperatuur waarop lucht verzadigd wordt (condensatie optreedt)",
+    legendValues: ["-10", "-5", "0", "5", "10", "15", "20"],
+  },
   humidity: {
-    label: "Humidity",
+    label: "Luchtvochtigheid",
     variable: "rh_2m",
     unit: "%",
+    description: "Relatieve luchtvochtigheid op 2 meter hoogte",
     legendValues: ["0", "20", "40", "60", "80", "100"],
-  },
-  precipitation: {
-    label: "Neerslag",
-    variable: "tot_prec",
-    unit: "mm",
-    legendValues: ["0", "1", "5", "10", "20"],
   },
   wind: {
     label: "Wind",
     variable: "u_10m",
     unit: "m/s",
+    description: "Windsnelheid op 10 meter hoogte (oost-west component)",
     legendValues: ["0", "5", "10", "15", "25"],
   },
+  wind_v: {
+    label: "Wind (Noord-Zuid)",
+    variable: "v_10m",
+    unit: "m/s",
+    description: "Windsnelheid op 10 meter hoogte (noord-zuid component)",
+    legendValues: ["0", "5", "10", "15", "25"],
+  },
+  precipitation: {
+    label: "Neerslag",
+    variable: "tot_prec",
+    unit: "mm",
+    description: "Totale verwachte neerslag (regen + sneeuw) in volgende uur",
+    legendValues: ["0", "1", "5", "10", "20"],
+  },
   clouds: {
-    label: "Clouds",
+    label: "Bewolking",
     variable: "clct",
     unit: "%",
+    description: "Percentage wolkenbedekkking van de lucht",
     legendValues: ["0", "20", "40", "60", "80", "100"],
   },
 };
@@ -128,19 +147,23 @@ function App() {
         position: "bottomright",
       }).addTo(map);
 
+      // Use OpenTopoMap as base layer (no API key needed, dark theme good for overlays)
       L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
         {
-          maxZoom: 18,
+          maxZoom: 17,
           attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+            'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
         }
       ).addTo(map);
 
-      map.fitBounds([
-        [50.5, 3.0],
-        [54.0, 8.0],
-      ]);
+      // Fit map to data bounds with padding (Netherlands region)
+      // Bounds: lat 50.5-54.0, lon 2.5-8.5 (data region)
+      const dataBounds = [
+        [50.3, 2.2],  // SW corner with padding
+        [54.2, 8.8],  // NE corner with padding
+      ];
+      map.fitBounds(dataBounds, { padding: [50, 50] });
 
       mapRef.current = map;
       console.log("Map initialized and stored in ref");
@@ -281,147 +304,159 @@ function App() {
 
       </header>
 
-      <section className="map-wrapper">
+      <div className="app-container">
 
-        <div
-          ref={mapContainerRef}
-          className="map"
-        />
+        {/* Left Sidebar: Layer Selection */}
+        <aside className="sidebar">
 
-        <div className="map-status">
-
-          <div className="status-model">
-            {layerConfig?.label || "ICON-D2"}
+          <div className="sidebar-header">
+            <div className="section-label">WEERKAARTEN</div>
           </div>
 
-          <div className="status-divider" />
-
-          <div>
-            {currentFrame
-              ? formatDate(currentFrame.validTime)
-              : ""}
+          <div className="layer-cards">
+            {Object.entries(LAYER_CONFIG).map(([key, config]) => {
+              const hasData = manifest.variables?.[config.variable];
+              return (
+                <button
+                  key={key}
+                  className={`layer-card ${activeLayer === key ? "active" : ""} ${!hasData ? "disabled" : ""}`}
+                  onClick={() => hasData && setActiveLayer(key)}
+                  disabled={!hasData}
+                >
+                  <div className="card-label">{config.label}</div>
+                  <div className="card-unit">{config.unit}</div>
+                  <div className="card-description">{config.description}</div>
+                  {!hasData && <div className="card-status">Geen data</div>}
+                </button>
+              );
+            })}
           </div>
 
-          <div>
-            {currentFrame
-              ? formatTime(currentFrame.validTime)
-              : ""}
-          </div>
+        </aside>
 
-        </div>
+        {/* Center: Map */}
+        <div className="main-content">
 
-        <div className="legend">
+          <section className="map-wrapper">
 
-          <div className="legend-title">
-            {layerConfig?.label || "Data"} · {layerConfig?.unit || ""}
-          </div>
-
-          <div className="legend-gradient" />
-
-          <div className="legend-values">
-            {layerConfig?.legendValues?.map((val) => (
-              <span key={val}>{val}</span>
-            ))}
-          </div>
-
-        </div>
-
-      </section>
-
-      <section className="controls">
-
-        <div className="layer-row">
-
-          <div className="section-label">
-            LAYER
-          </div>
-
-          {Object.entries(LAYER_CONFIG).map(([key, config]) => {
-            const hasData = manifest.variables?.[config.variable];
-            return (
-              <button
-                key={key}
-                className={`layer ${activeLayer === key ? "active" : ""} ${!hasData ? "disabled" : ""}`}
-                onClick={() => hasData && setActiveLayer(key)}
-                disabled={!hasData}
-              >
-                {config.label}
-              </button>
-            );
-          })}
-
-          <div className="coming-soon">
-            meer lagen volgen
-          </div>
-
-        </div>
-
-        <div className="timeline">
-
-          <button
-            className="play"
-            onClick={() => {
-              if (
-                timeIndex >=
-                currentLayerFrames.length - 1
-              ) {
-                setTimeIndex(0);
-              }
-
-              setPlaying((value) => !value);
-            }}
-          >
-            {playing ? "Ⅱ" : "▶"}
-          </button>
-
-          <div className="timeline-content">
-
-            <input
-              type="range"
-              min="0"
-              max={Math.max(0, currentLayerFrames.length - 1)}
-              value={timeIndex}
-              onChange={(event) => {
-                setPlaying(false);
-                setTimeIndex(
-                  Number(event.target.value)
-                );
-              }}
+            <div
+              ref={mapContainerRef}
+              className="map"
             />
 
-            <div className="timeline-labels">
+            <div className="map-status">
 
-              {currentLayerFrames.map((frame, index) => (
-                <span key={frame.validTime}>
-                  {index % 3 === 0
-                    ? formatTime(frame.validTime)
+              <div className="status-model">
+                {layerConfig?.label || "ICON-D2"}
+              </div>
+
+              <div className="status-divider" />
+
+              <div>
+                {currentFrame
+                  ? formatDate(currentFrame.validTime)
+                  : ""}
+              </div>
+
+              <div>
+                {currentFrame
+                  ? formatTime(currentFrame.validTime)
+                  : ""}
+              </div>
+
+            </div>
+
+            <div className="legend">
+
+              <div className="legend-title">
+                {layerConfig?.label || "Data"} · {layerConfig?.unit || ""}
+              </div>
+
+              <div className="legend-gradient" />
+
+              <div className="legend-values">
+                {layerConfig?.legendValues?.map((val) => (
+                  <span key={val}>{val}</span>
+                ))}
+              </div>
+
+            </div>
+
+          </section>
+
+          {/* Timeline Controls */}
+          <section className="controls">
+
+            <div className="timeline">
+
+              <button
+                className="play"
+                onClick={() => {
+                  if (
+                    timeIndex >=
+                    currentLayerFrames.length - 1
+                  ) {
+                    setTimeIndex(0);
+                  }
+
+                  setPlaying((value) => !value);
+                }}
+              >
+                {playing ? "Ⅱ" : "▶"}
+              </button>
+
+              <div className="timeline-content">
+
+                <input
+                  type="range"
+                  min="0"
+                  max={Math.max(0, currentLayerFrames.length - 1)}
+                  value={timeIndex}
+                  onChange={(event) => {
+                    setPlaying(false);
+                    setTimeIndex(
+                      Number(event.target.value)
+                    );
+                  }}
+                />
+
+                <div className="timeline-labels">
+
+                  {currentLayerFrames.map((frame, index) => (
+                    <span key={frame.validTime}>
+                      {index % 3 === 0
+                        ? formatTime(frame.validTime)
+                        : ""}
+                    </span>
+                  ))}
+
+                </div>
+
+              </div>
+
+              <div className="current-time">
+
+                <div className="current-date">
+                  {currentFrame
+                    ? formatDate(currentFrame.validTime)
                     : ""}
-                </span>
-              ))}
+                </div>
+
+                <div className="current-hour">
+                  {currentFrame
+                    ? formatTime(currentFrame.validTime)
+                    : ""}
+                </div>
+
+              </div>
 
             </div>
 
-          </div>
-
-          <div className="current-time">
-
-            <div className="current-date">
-              {currentFrame
-                ? formatDate(currentFrame.validTime)
-                : ""}
-            </div>
-
-            <div className="current-hour">
-              {currentFrame
-                ? formatTime(currentFrame.validTime)
-                : ""}
-            </div>
-
-          </div>
+          </section>
 
         </div>
 
-      </section>
+      </div>
 
       <footer>
 

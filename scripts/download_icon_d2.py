@@ -337,9 +337,9 @@ def create_overlay(lats, lons, values, output_file, value_to_rgba):
     """
 
     # Regular ICON-D2 grid is roughly 2 km.
-    # For MVP we create a 600x500 visual raster.
-    width = 600
-    height = 500
+    # Create high-res 1200x1000 visual raster.
+    width = 1200
+    height = 1000
 
     # Vectorized: convert geographic coords to pixel coords
     x = ((lons - MIN_LON) / (MAX_LON - MIN_LON) * (width - 1)).astype(int)
@@ -361,7 +361,7 @@ def create_overlay(lats, lons, values, output_file, value_to_rgba):
     # Convert numpy array to PIL Image
     image = Image.fromarray(img_array, mode='RGBA')
 
-    # Slight enlargement of individual grid cells.
+    # Enlarge for better display (2400x2000).
     enlarged = image.resize(
         (width * 2, height * 2),
         Image.Resampling.BILINEAR,
@@ -414,8 +414,8 @@ def main():
         # Sort by filename / forecast time.
         files.sort()
 
-        # Limit to 24 frames (24 hour forecast)
-        files = files[:24]
+        # Limit to 42 frames (42 hour forecast - maximum ICON-D2 provides)
+        files = files[:42]
 
         # Determine the model run time from the filename
         if files:

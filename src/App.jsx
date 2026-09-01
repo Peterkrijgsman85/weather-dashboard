@@ -37,18 +37,25 @@ const LAYER_CONFIG = {
     legendValues: ["0", "20", "40", "60", "80", "100"],
   },
   wind: {
-    label: "Wind",
+    label: "Wind (O-W)",
     variable: "u_10m",
     unit: "m/s",
-    description: "Windsnelheid op 10 meter hoogte (oost-west component)",
+    description: "Windsnelheid oost-west component op 10 meter hoogte",
     legendValues: ["0", "5", "10", "15", "25"],
   },
   wind_v: {
-    label: "Wind (Noord-Zuid)",
+    label: "Wind (N-Z)",
     variable: "v_10m",
     unit: "m/s",
-    description: "Windsnelheid op 10 meter hoogte (noord-zuid component)",
+    description: "Windsnelheid noord-zuid component op 10 meter hoogte",
     legendValues: ["0", "5", "10", "15", "25"],
+  },
+  windgust: {
+    label: "Windstoten",
+    variable: "vmax_10m",
+    unit: "m/s",
+    description: "Maximale windstoten op 10 meter hoogte - kritiek voor onweer",
+    legendValues: ["0", "5", "10", "15", "25", "40"],
   },
   precipitation: {
     label: "Neerslag",
@@ -57,12 +64,68 @@ const LAYER_CONFIG = {
     description: "Totale verwachte neerslag (regen + sneeuw) in volgende uur",
     legendValues: ["0", "1", "5", "10", "20"],
   },
-  clouds: {
-    label: "Bewolking",
+  snow: {
+    label: "Sneeuw",
+    variable: "snow",
+    unit: "cm",
+    description: "Verwachte sneeuwdiepte",
+    legendValues: ["0", "2", "5", "10", "20", "30"],
+  },
+  hail: {
+    label: "Hagel",
+    variable: "hail_con",
+    unit: "%",
+    description: "Hagelwaarschijnlijkheid - cruciaal voor severe weather",
+    legendValues: ["0", "10", "25", "50", "75", "100"],
+  },
+  clouds_total: {
+    label: "Bewolking (totaal)",
     variable: "clct",
     unit: "%",
-    description: "Percentage wolkenbedekkking van de lucht",
+    description: "Totale wolkenbedekkking van de lucht",
     legendValues: ["0", "20", "40", "60", "80", "100"],
+  },
+  clouds_high: {
+    label: "Hoge wolken",
+    variable: "hcdc",
+    unit: "%",
+    description: "Hoge wolken (> 6km) - cirruswolken en dergelijke",
+    legendValues: ["0", "20", "40", "60", "80", "100"],
+  },
+  clouds_mid: {
+    label: "Middelbare wolken",
+    variable: "mcdc",
+    unit: "%",
+    description: "Middelbare wolken (2-6km) - altocumuluswolken",
+    legendValues: ["0", "20", "40", "60", "80", "100"],
+  },
+  clouds_low: {
+    label: "Lage wolken",
+    variable: "lcdc",
+    unit: "%",
+    description: "Lage wolken (< 2km) - cumulus en stratocumuluswolken",
+    legendValues: ["0", "20", "40", "60", "80", "100"],
+  },
+  cape: {
+    label: "CAPE",
+    variable: "cape_ml",
+    unit: "J/kg",
+    description: "Convectieve potentiële energie - index voor onweersgevoeligheid",
+    legendValues: ["0", "500", "1000", "2000", "3500"],
+  },
+  lifted_index: {
+    label: "Lifted Index",
+    variable: "li",
+    unit: "K",
+    description: "Atmosferische stabiliteit - negatief = onweersgevoelig",
+    legendValues: ["-10", "-5", "0", "5", "10"],
+  },
+  pressure: {
+    label: "Luchtdruk",
+    variable: "p_sfc",
+    unit: "hPa",
+    description: "Oppervlaktedruk - groen=hoge druk, rood=lage druk",
+    legendValues: ["970", "990", "1010", "1030", "1050"],
   },
 };
 
@@ -223,7 +286,7 @@ function App() {
       frame.image,
       manifest.bounds,
       {
-        opacity: 0.78,
+        opacity: 0.92,
         interactive: false,
       }
     ).addTo(mapRef.current);

@@ -15,13 +15,31 @@ DWD_BASE = "https://opendata.dwd.de/weather/nwp/icon-d2/grib"
 RUN = None  # Will be auto-detected
 
 VARIABLES = [
+    # Temperature & Moisture
     "t_2m",       # Temperature 2m
     "td_2m",      # Dew point 2m
     "rh_2m",      # Relative humidity 2m
+    
+    # Wind
     "u_10m",      # U wind 10m
     "v_10m",      # V wind 10m
+    "vmax_10m",   # Wind gust 10m (severe weather critical)
+    
+    # Precipitation
     "tot_prec",   # Total precipitation
+    "snow",       # Snow depth/fall
+    "hail_con",   # Hail (severe weather)
+    
+    # Clouds
     "clct",       # Total cloud cover
+    "hcdc",       # High cloud cover
+    "mcdc",       # Mid cloud cover
+    "lcdc",       # Low cloud cover
+    
+    # Severe Weather Indices
+    "cape_ml",    # CAPE mixed layer
+    "li",         # Lifted index
+    "p_sfc",      # Surface pressure
 ]
 
 OUTPUT_DIR = Path("public/data/icon-d2")
@@ -124,17 +142,17 @@ def temperature_to_rgba_vectorized(values):
             fraction = (celsius[mask] - val_a) / (val_b - val_a)
             for c in range(3):
                 colors[mask, c] = (col_a[c] + (col_b[c] - col_a[c]) * fraction).astype(np.uint8)
-            colors[mask, 3] = 210
+            colors[mask, 3] = 255
     
     # Values below min
     mask_low = celsius < stops[0][0]
     colors[mask_low, :3] = stops[0][1]
-    colors[mask_low, 3] = 210
+    colors[mask, 3] = 255
     
     # Values above max
     mask_high = celsius > stops[-1][0]
     colors[mask_high, :3] = stops[-1][1]
-    colors[mask_high, 3] = 210
+    colors[mask, 3] = 255
     
     return colors
 
@@ -146,7 +164,7 @@ def humidity_to_rgba_vectorized(values):
     colors[:, 0] = (255 * (1 - humidity / 100)).astype(np.uint8)
     colors[:, 1] = (150 + 105 * (humidity / 100)).astype(np.uint8)
     colors[:, 2] = (196 - 50 * (humidity / 100)).astype(np.uint8)
-    colors[:, 3] = 210
+    colors[:, 3] = 255
     return colors
 
 
@@ -171,7 +189,7 @@ def precipitation_to_rgba_vectorized(values):
             fraction = (values[mask] - val_a) / (val_b - val_a)
             for c in range(3):
                 colors[mask, c] = (col_a[c] + (col_b[c] - col_a[c]) * fraction).astype(np.uint8)
-            colors[mask, 3] = 210
+            colors[mask, 3] = 255
     
     mask_zero = values <= stops[0][0]
     colors[mask_zero, :3] = stops[0][1]
@@ -179,7 +197,7 @@ def precipitation_to_rgba_vectorized(values):
     
     mask_high = values >= stops[-1][0]
     colors[mask_high, :3] = stops[-1][1]
-    colors[mask_high, 3] = 210
+    colors[mask, 3] = 255
     
     return colors
 
@@ -205,15 +223,15 @@ def wind_to_rgba_vectorized(values):
             fraction = (values[mask] - val_a) / (val_b - val_a)
             for c in range(3):
                 colors[mask, c] = (col_a[c] + (col_b[c] - col_a[c]) * fraction).astype(np.uint8)
-            colors[mask, 3] = 210
+            colors[mask, 3] = 255
     
     mask_calm = values <= stops[0][0]
     colors[mask_calm, :3] = stops[0][1]
-    colors[mask_calm, 3] = 0
+    colors[mask_calm, 3] = 50
     
     mask_strong = values >= stops[-1][0]
     colors[mask_strong, :3] = stops[-1][1]
-    colors[mask_strong, 3] = 210
+    colors[mask_strong, 3] = 255
     
     return colors
 
@@ -222,7 +240,7 @@ def cloud_to_rgba_vectorized(values):
     """Vectorized cloud cover to RGBA (0-100%)."""
     cloud_pct = np.clip(values, 0, 100)
     colors = np.zeros((len(values), 4), dtype=np.uint8)
-    opacity = (210 * cloud_pct / 100).astype(np.uint8)
+    opacity = (255 * cloud_pct / 100).astype(np.uint8)
     gray = ((200 * cloud_pct / 100) + 55).astype(np.uint8)
     
     colors[:, 0] = gray
@@ -233,18 +251,188 @@ def cloud_to_rgba_vectorized(values):
     return colors
 
 
+def windgust_to_rgba_vectorized(values):
+    """Vectorized wind gust to RGBA (0-40 m/s). Red scale for severe winds."""
+    stops = [
+        (0, np.array([31, 178, 227])),      # Light: cyan
+        (5, np.array([49, 201, 84])),       # Moderate: green
+        (10, np.array([255, 193, 7])),      # Strong: yellow
+        (15, np.array([255, 112, 67])),     # Very strong: orange
+        (25, np.array([229, 57, 53])),      # Severe: red
+        (40, np.array([136, 14, 79])),      # Extreme: dark red
+    ]
+    
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    for i in range(len(stops) - 1):
+        val_a, col_a = stops[i]
+        val_b, col_b = stops[i + 1]
+        mask = (values > val_a) & (values <= val_b)
+        if np.any(mask):
+            fraction = (values[mask] - val_a) / (val_b - val_a)
+            for c in range(3):
+                colors[mask, c] = (col_a[c] + (col_b[c] - col_a[c]) * fraction).astype(np.uint8)
+            colors[mask, 3] = 255
+    
+    mask_calm = values <= stops[0][0]
+    colors[mask_calm, :3] = stops[0][1]
+    colors[mask_calm, 3] = 50
+    
+    mask_strong = values >= stops[-1][0]
+    colors[mask_strong, :3] = stops[-1][1]
+    colors[mask_strong, 3] = 255
+    
+    return colors
+
+
+def hail_to_rgba_vectorized(values):
+    """Vectorized hail probability to RGBA (0-100%). Purple scale."""
+    hail_pct = np.clip(values, 0, 100)
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    # 0% = semi-transparent, higher = fully opaque purple
+    opacity = (50 + (205 * hail_pct / 100)).astype(np.uint8)
+    
+    # Interpolate from blue to purple to red
+    r = (hail_pct * 2).astype(np.uint8)
+    g = np.zeros_like(hail_pct, dtype=np.uint8)
+    b = np.clip(255 - hail_pct, 0, 255).astype(np.uint8)
+    
+    colors[:, 0] = r
+    colors[:, 1] = g
+    colors[:, 2] = b
+    colors[:, 3] = opacity
+    
+    return colors
+
+
+def snow_to_rgba_vectorized(values):
+    """Vectorized snow depth/fall to RGBA (0-30 cm). Blue-white scale."""
+    snow_cm = np.clip(values, 0, 30)
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    # 0 = semi-transparent, higher = fully opaque white
+    opacity = (50 + (205 * snow_cm / 30)).astype(np.uint8)
+    
+    # Blue (0cm) to white (30cm)
+    r = np.clip((snow_cm / 30 * 100).astype(np.uint8), 100, 255)
+    g = np.clip((snow_cm / 30 * 120).astype(np.uint8), 150, 255)
+    b = np.clip(200 + (snow_cm / 30 * 55).astype(np.uint8), 200, 255)
+    
+    colors[:, 0] = r
+    colors[:, 1] = g
+    colors[:, 2] = b
+    colors[:, 3] = opacity
+    
+    return colors
+
+
+def pressure_to_rgba_vectorized(values):
+    """Vectorized surface pressure to RGBA (970-1050 hPa). Green=high pressure, Red=low."""
+    p = np.clip(values, 970, 1050)
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    # Normalize 970-1050 to 0-1
+    norm = (p - 970) / 80
+    
+    # Green (high, 1050) to Red (low, 970)
+    r = (norm * 255).astype(np.uint8)
+    g = ((1 - norm) * 100 + 150).astype(np.uint8)
+    b = ((1 - norm) * 100 + 50).astype(np.uint8)
+    
+    colors[:, 0] = r
+    colors[:, 1] = g
+    colors[:, 2] = b
+    colors[:, 3] = 255
+    
+    return colors
+
+
+def cape_to_rgba_vectorized(values):
+    """Vectorized CAPE to RGBA (0-4000 J/kg). Red scale for instability."""
+    stops = [
+        (0, np.array([74, 144, 226])),      # Stable: blue
+        (500, np.array([76, 175, 80])),     # Low: green
+        (1000, np.array([255, 193, 7])),    # Moderate: yellow
+        (2000, np.array([255, 87, 34])),    # High: orange
+        (3500, np.array([229, 57, 53])),    # Very high: red
+        (4000, np.array([98, 0, 0])),       # Extreme: dark red
+    ]
+    
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    for i in range(len(stops) - 1):
+        val_a, col_a = stops[i]
+        val_b, col_b = stops[i + 1]
+        mask = (values > val_a) & (values <= val_b)
+        if np.any(mask):
+            fraction = (values[mask] - val_a) / (val_b - val_a)
+            for c in range(3):
+                colors[mask, c] = (col_a[c] + (col_b[c] - col_a[c]) * fraction).astype(np.uint8)
+            colors[mask, 3] = 255
+    
+    mask_stable = values <= stops[0][0]
+    colors[mask_stable, :3] = stops[0][1]
+    colors[mask_stable, 3] = 120
+    
+    mask_extreme = values >= stops[-1][0]
+    colors[mask_extreme, :3] = stops[-1][1]
+    colors[mask_extreme, 3] = 255
+    
+    return colors
+
+
+def lifted_index_to_rgba_vectorized(values):
+    """Vectorized lifted index to RGBA. Red = unstable (low/negative values), Blue = stable."""
+    li = np.clip(values, -10, 10)
+    colors = np.zeros((len(values), 4), dtype=np.uint8)
+    
+    # Normalize -10 to 10, so 0 = red (unstable), 10 = blue (stable)
+    norm = (li + 10) / 20
+    
+    # Red (unstable, negative) to Blue (stable, positive)
+    r = ((1 - norm) * 255).astype(np.uint8)
+    g = 0
+    b = (norm * 255).astype(np.uint8)
+    
+    colors[:, 0] = r
+    colors[:, 1] = g
+    colors[:, 2] = b
+    colors[:, 3] = 255
+    
+    return colors
+
+
 def get_value_to_rgba(variable):
     """
     Return the appropriate vectorized color mapping function for a variable.
     """
     mappings = {
+        # Temperature & Moisture
         "t_2m": temperature_to_rgba_vectorized,
         "td_2m": temperature_to_rgba_vectorized,
         "rh_2m": humidity_to_rgba_vectorized,
+        
+        # Wind
         "u_10m": wind_to_rgba_vectorized,
         "v_10m": wind_to_rgba_vectorized,
+        "vmax_10m": windgust_to_rgba_vectorized,
+        
+        # Precipitation
         "tot_prec": precipitation_to_rgba_vectorized,
+        "snow": snow_to_rgba_vectorized,
+        "hail_con": hail_to_rgba_vectorized,
+        
+        # Clouds
         "clct": cloud_to_rgba_vectorized,
+        "hcdc": cloud_to_rgba_vectorized,
+        "mcdc": cloud_to_rgba_vectorized,
+        "lcdc": cloud_to_rgba_vectorized,
+        
+        # Severe Weather Indices
+        "cape_ml": cape_to_rgba_vectorized,
+        "li": lifted_index_to_rgba_vectorized,
+        "p_sfc": pressure_to_rgba_vectorized,
     }
     
     return mappings.get(variable, temperature_to_rgba_vectorized)

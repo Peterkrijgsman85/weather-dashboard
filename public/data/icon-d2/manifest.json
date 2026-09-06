@@ -270,7 +270,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T19:43:19.223784+00:00"
+      "generatedAt": "2026-09-06T22:31:11.773549+00:00"
     },
     "td_2m": {
       "frames": [
@@ -528,7 +528,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T19:44:50.150977+00:00"
+      "generatedAt": "2026-09-06T22:32:22.149454+00:00"
     },
     "tmax_2m": {
       "frames": [
@@ -786,7 +786,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T19:46:22.166792+00:00"
+      "generatedAt": "2026-09-06T22:33:29.963409+00:00"
     },
     "tmin_2m": {
       "frames": [
@@ -1044,7 +1044,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T19:47:54.621267+00:00"
+      "generatedAt": "2026-09-06T22:34:38.934792+00:00"
     },
     "u_10m": {
       "frames": [
@@ -1302,7 +1302,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T19:49:31.209916+00:00"
+      "generatedAt": "2026-09-06T22:35:52.183080+00:00"
     },
     "v_10m": {
       "frames": [
@@ -1560,7 +1560,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T19:51:17.051661+00:00"
+      "generatedAt": "2026-09-06T22:37:04.526404+00:00"
     },
     "vmax_10m": {
       "frames": [
@@ -1818,7 +1818,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T19:52:55.439818+00:00"
+      "generatedAt": "2026-09-06T22:38:22.857086+00:00"
     },
     "pmsl": {
       "frames": [
@@ -2076,7 +2076,7 @@
         }
       ],
       "renderType": "contour",
-      "generatedAt": "2026-09-06T19:54:14.836726+00:00"
+      "generatedAt": "2026-09-06T22:39:15.664420+00:00"
     },
     "ps": {
       "frames": [
@@ -2334,7 +2334,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T19:55:37.577275+00:00"
+      "generatedAt": "2026-09-06T22:40:15.956438+00:00"
     },
     "ww": {
       "frames": [
@@ -2592,7 +2592,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T19:56:28.668476+00:00"
+      "generatedAt": "2026-09-06T22:41:16.849956+00:00"
     },
     "vis": {
       "frames": [
@@ -2850,7 +2850,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T19:57:59.042055+00:00"
+      "generatedAt": "2026-09-06T22:42:39.603871+00:00"
     },
     "tot_prec": {
       "frames": [
@@ -3108,7 +3108,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T19:59:43.610617+00:00"
+      "generatedAt": "2026-09-06T22:43:58.409951+00:00"
     },
     "rain_gsp": {
       "frames": [
@@ -3366,7 +3366,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:01:23.295022+00:00"
+      "generatedAt": "2026-09-06T22:45:13.338187+00:00"
     },
     "snow_gsp": {
       "frames": [
@@ -3624,7 +3624,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:02:20.807257+00:00"
+      "generatedAt": "2026-09-06T22:45:52.916773+00:00"
     },
     "rain_con": {
       "frames": [
@@ -3882,7 +3882,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:03:56.901656+00:00"
+      "generatedAt": "2026-09-06T22:47:06.729742+00:00"
     },
     "snow_con": {
       "frames": [
@@ -4140,7 +4140,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:04:34.384052+00:00"
+      "generatedAt": "2026-09-06T22:47:35.619213+00:00"
     },
     "prg_gsp": {
       "frames": [
@@ -4398,7 +4398,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:05:56.677399+00:00"
+      "generatedAt": "2026-09-06T22:48:35.569572+00:00"
     },
     "prr_gsp": {
       "frames": [
@@ -4656,7 +4656,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:07:01.306401+00:00"
+      "generatedAt": "2026-09-06T22:49:22.728411+00:00"
     },
     "prs_gsp": {
       "frames": [
@@ -4914,7 +4914,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:08:30.331134+00:00"
+      "generatedAt": "2026-09-06T22:51:29.254658+00:00"
     },
     "dbz_cmax": {
       "frames": [
@@ -5172,7 +5172,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:10:39.720977+00:00"
+      "generatedAt": "2026-09-06T22:53:19.707727+00:00"
     },
     "dbz_850": {
       "frames": [
@@ -5430,7 +5430,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:12:01.272386+00:00"
+      "generatedAt": "2026-09-06T22:54:22.228269+00:00"
     },
     "grau_gsp": {
       "frames": [
@@ -5688,7 +5688,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:12:51.231157+00:00"
+      "generatedAt": "2026-09-06T22:55:02.758083+00:00"
     },
     "runoff_g": {
       "frames": [
@@ -5946,7 +5946,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:14:05.408707+00:00"
+      "generatedAt": "2026-09-06T22:55:57.166617+00:00"
     },
     "runoff_s": {
       "frames": [
@@ -6204,7 +6204,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:15:01.385686+00:00"
+      "generatedAt": "2026-09-06T22:56:37.235076+00:00"
     },
     "clct": {
       "frames": [
@@ -6462,7 +6462,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:16:47.034312+00:00"
+      "generatedAt": "2026-09-06T22:58:03.299898+00:00"
     },
     "clct_mod": {
       "frames": [
@@ -6720,7 +6720,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:18:05.888083+00:00"
+      "generatedAt": "2026-09-06T22:59:02.856346+00:00"
     },
     "clcl": {
       "frames": [
@@ -6978,7 +6978,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:19:49.327277+00:00"
+      "generatedAt": "2026-09-06T23:00:31.313279+00:00"
     },
     "clcm": {
       "frames": [
@@ -7236,7 +7236,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:21:54.531806+00:00"
+      "generatedAt": "2026-09-06T23:02:19.841998+00:00"
     },
     "clch": {
       "frames": [
@@ -7494,7 +7494,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:23:38.520661+00:00"
+      "generatedAt": "2026-09-06T23:03:45.875163+00:00"
     },
     "ceiling": {
       "frames": [
@@ -7752,7 +7752,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:25:00.596006+00:00"
+      "generatedAt": "2026-09-06T23:04:49.455852+00:00"
     },
     "cldepth": {
       "frames": [
@@ -8010,7 +8010,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:26:25.661041+00:00"
+      "generatedAt": "2026-09-06T23:05:50.075659+00:00"
     },
     "hbas_sc": {
       "frames": [
@@ -8268,7 +8268,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:27:27.629621+00:00"
+      "generatedAt": "2026-09-06T23:06:36.815011+00:00"
     },
     "htop_sc": {
       "frames": [
@@ -8526,7 +8526,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:28:28.662942+00:00"
+      "generatedAt": "2026-09-06T23:07:25.943444+00:00"
     },
     "htop_dc": {
       "frames": [
@@ -8784,7 +8784,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:29:37.286893+00:00"
+      "generatedAt": "2026-09-06T23:08:16.767876+00:00"
     },
     "cape_ml": {
       "frames": [
@@ -9042,7 +9042,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:31:22.001963+00:00"
+      "generatedAt": "2026-09-06T23:09:35.639499+00:00"
     },
     "cin_ml": {
       "frames": [
@@ -9300,7 +9300,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:32:57.711761+00:00"
+      "generatedAt": "2026-09-06T23:10:49.763069+00:00"
     },
     "lpi": {
       "frames": [
@@ -9558,7 +9558,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:33:41.445671+00:00"
+      "generatedAt": "2026-09-06T23:11:25.441008+00:00"
     },
     "lpi_max": {
       "frames": [
@@ -9816,7 +9816,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:34:22.819703+00:00"
+      "generatedAt": "2026-09-06T23:11:54.387652+00:00"
     },
     "uh_max": {
       "frames": [
@@ -10074,7 +10074,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:35:37.476369+00:00"
+      "generatedAt": "2026-09-06T23:12:49.576013+00:00"
     },
     "uh_max_low": {
       "frames": [
@@ -10332,7 +10332,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:36:55.409142+00:00"
+      "generatedAt": "2026-09-06T23:13:46.622542+00:00"
     },
     "uh_max_med": {
       "frames": [
@@ -10590,7 +10590,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:38:10.904800+00:00"
+      "generatedAt": "2026-09-06T23:14:44.088225+00:00"
     },
     "echotop": {
       "frames": [
@@ -10848,7 +10848,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:39:23.140799+00:00"
+      "generatedAt": "2026-09-06T23:15:36.259752+00:00"
     },
     "relhum_2m": {
       "frames": [
@@ -11106,7 +11106,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:41:45.646076+00:00"
+      "generatedAt": "2026-09-06T23:16:46.258457+00:00"
     },
     "qv_s": {
       "frames": [
@@ -11364,7 +11364,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:43:10.393078+00:00"
+      "generatedAt": "2026-09-06T23:17:47.968897+00:00"
     },
     "tqv": {
       "frames": [
@@ -11622,7 +11622,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:45:17.210902+00:00"
+      "generatedAt": "2026-09-06T23:19:26.256902+00:00"
     },
     "twater": {
       "frames": [
@@ -11880,7 +11880,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:46:50.163115+00:00"
+      "generatedAt": "2026-09-06T23:20:33.697663+00:00"
     },
     "tqc": {
       "frames": [
@@ -12138,7 +12138,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:48:14.674587+00:00"
+      "generatedAt": "2026-09-06T23:21:36.508764+00:00"
     },
     "tqg": {
       "frames": [
@@ -12396,7 +12396,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:49:34.832409+00:00"
+      "generatedAt": "2026-09-06T23:22:36.338566+00:00"
     },
     "tqi": {
       "frames": [
@@ -12654,7 +12654,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:52:39.793047+00:00"
+      "generatedAt": "2026-09-06T23:23:57.028603+00:00"
     },
     "tqr": {
       "frames": [
@@ -12912,7 +12912,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:53:52.027033+00:00"
+      "generatedAt": "2026-09-06T23:24:51.239180+00:00"
     },
     "tqs": {
       "frames": [
@@ -13170,7 +13170,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:55:37.229078+00:00"
+      "generatedAt": "2026-09-06T23:26:03.599771+00:00"
     },
     "hzerocl": {
       "frames": [
@@ -13428,7 +13428,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:57:40.518340+00:00"
+      "generatedAt": "2026-09-06T23:27:35.882229+00:00"
     },
     "snowc": {
       "frames": [
@@ -13686,7 +13686,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T20:58:27.376464+00:00"
+      "generatedAt": "2026-09-06T23:28:05.042775+00:00"
     },
     "snowlmt": {
       "frames": [
@@ -13944,7 +13944,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T21:01:05.510004+00:00"
+      "generatedAt": "2026-09-06T23:29:39.758301+00:00"
     },
     "t_wml_lk": {
       "frames": [
@@ -14202,7 +14202,7 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T21:02:06.431636+00:00"
+      "generatedAt": "2026-09-06T23:30:18.623248+00:00"
     },
     "z0": {
       "frames": [
@@ -14460,8 +14460,8 @@
         }
       ],
       "renderType": "raster",
-      "generatedAt": "2026-09-06T21:03:37.899609+00:00"
+      "generatedAt": "2026-09-06T23:31:22.272152+00:00"
     }
   },
-  "generatedAt": "2026-09-06T21:03:37.899629+00:00"
+  "generatedAt": "2026-09-06T23:31:22.272165+00:00"
 }

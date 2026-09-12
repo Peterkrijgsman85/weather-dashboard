@@ -1,1 +1,1 @@
-{"type": "FeatureCollection", "features": []}
+{"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"level": 1025.0}, "geometry": {"type": "LineString", "coordinates": [[6.0958, 50.5], [6.0944, 50.52], [6.08, 50.5365], [6.06, 50.528], [6.04, 50.5289], [6.02, 50.5247], [6.0101, 50.52], [6.0, 50.5136], [5.9844, 50.5]]}}, {"type": "Feature", "properties": {"level": 1025.0}, "geometry": {"type": "LineString", "coordinates": [[6.2366, 50.5], [6.22, 50.5046], [6.205, 50.5]]}}]}
